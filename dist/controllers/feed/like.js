@@ -49,15 +49,16 @@ const likeHandler = (req, res, next) => {
                 }
                 else {
                     await like_1.Likes.create({ feedId, userId }).then(async (d) => {
-                        const isGiven = await tagFunc_1.hundLike(feedId);
-                        if (isGiven) {
-                            popUp = '좋아요 100개를 받아 대박사건 뱃지를 획득 하셨습니다!';
-                        }
                         message = 'Like';
                     });
                 }
                 await like_1.Likes.count({ where: { feedId } }).then(async (d) => {
-                    await feed_1.Feeds.update({ likeNum: d }, { where: { id: feedId } }).then(d => {
+                    await feed_1.Feeds.update({ likeNum: d }, { where: { id: feedId } }).then(async (d) => {
+                        const isGiven = await tagFunc_1.hundLike(feedId);
+                        if (isGiven) {
+                            popUp = '좋아요 100개를 받아 대박사건 뱃지를 획득 하셨습니다!';
+                        }
+                        ;
                         res.status(200).json({ message, popUp });
                     });
                 });

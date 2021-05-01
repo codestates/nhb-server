@@ -41,16 +41,16 @@ const likeHandler = (req: Request, res:Response, next: NextFunction) => {
         //? 없다면 데이터 베이스 생성
         } else {
           await Likes.create({feedId, userId}).then(async (d) => {
-            const isGiven = await hundLike(feedId);
-            if (isGiven) {
-              popUp = '좋아요 100개를 받아 대박사건 뱃지를 획득 하셨습니다!'
-            }
             message = 'Like';
           })
         }
 
-        await Likes.count({where: {feedId}}).then( async (d) => {
-          await Feeds.update({likeNum: d}, {where: {id: feedId}}).then(d => {
+        await Likes.count({where: {feedId}}).then(async (d) => {
+          await Feeds.update({likeNum: d}, {where: {id: feedId}}).then(async (d) => {
+            const isGiven = await hundLike(feedId);
+            if (isGiven) {
+              popUp = '좋아요 100개를 받아 대박사건 뱃지를 획득 하셨습니다!';
+            };
             res.status(200).json({message, popUp});
           });
         })
