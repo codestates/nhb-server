@@ -15,12 +15,16 @@ OAuths.init({
         allowNull: false
     },
     oAuthId: {
-        type: sequelize_1.DataTypes.INTEGER,
+        type: sequelize_1.DataTypes.STRING,
         allowNull: false
     },
     userId: {
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: false,
+    },
+    salt: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: false
     }
 }, {
     modelName: 'OAuths',
@@ -31,4 +35,9 @@ OAuths.init({
 user_1.Users.hasMany(OAuths, {
     sourceKey: "id",
     foreignKey: "userId",
+    as: 'userIdOauth'
+});
+OAuths.belongsTo(user_1.Users, {
+    foreignKey: 'userId',
+    as: 'userIdOauth'
 });

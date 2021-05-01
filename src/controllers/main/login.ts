@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction} from 'express';
-import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 import { Users } from '../../models/user';
+import { issueToken } from '../func/issueToken';
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
   const { authCode } = req.body;
@@ -17,18 +17,11 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 
     if (status === 3) return res.status(400).json({message: "Banned user"});
 
-    const issueToken = (secret: string, expiresIn: string) => {
-      if (status === 9) return jwt.sign({ id }, secret, { expiresIn: '3h' });
-      else return jwt.sign({ id }, secret, { expiresIn });
-    };
-
     //? 코드 초기화 -> 토큰 발급 후 전송
-    await Users.update({ authCode: null }, {where: { id }}).then( data => {
-       const accTokenSecret = process.env.ACCTOKEN_SECRET || 'acctest';
-       const refTokenSecret = process.env.REFTOKEN_SECRET || 'reftest';
-       const domain = process.env.CLIENT_DOMAIN || 'localhost';
-       const accessToken = issueToken(accTokenSecret, '5h');
-       const refreshToken = issueToken(refTokenSecret, '15d');
+    await Users.update({ authCode: null }, {where: { id }}).then(async (data) => {
+       const domain = process.env.COOKIE_DOMAIN || 'localhost';
+       const accessToken = await issueToken(true, '5h', id, status);
+       const refreshToken = await issueToken(false, '15d', id, status);
        interface ResMessage {
          data: {accessToken: string, isAdmin?: boolean};
          message: string
@@ -38,15 +31,16 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
          resMessage = {data: {accessToken: accessToken, isAdmin: true}, message: "Admin accessed"};
        }
     
+      //? document.cookie 방지, secure-> https만 가능, path -> path 제한, domain -> subdomain
        res.status(200)
        .cookie('refreshToken', refreshToken, {
-         domain,
-         path: '/',
-         httpOnly: true,
-         secure: true,
-         sameSite: 'none'
-       })
-       .json(resMessage)
+          domain,
+          path: '/main',
+          httpOnly: true,
+          secure: true,
+          sameSite: 'none'
+        })
+        .json(resMessage)
       }
     );
   }

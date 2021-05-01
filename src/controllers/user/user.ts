@@ -50,15 +50,15 @@ const userHandler = {
         tags.push(tag);
       };
 
-      let userlikeNum: number = 0; 
+      let userLikeNum: number = 0; 
       for (let i = 0; i < usersFeeds.length; i += 1) {
-        userlikeNum += usersFeeds[i].feedsLikes.length;
+        userLikeNum += usersFeeds[i].feedsLikes.length;
       };
 
       const newCreatedAt = new Date(new Date(createdAt).setHours(new Date(createdAt).getHours() + 9));
       const newUpdatedAt = new Date(new Date(updatedAt).setHours(new Date(updatedAt).getHours() + 9));
 
-      const userInfo = {userId: id, nickName, introduction, tags, userlikeNum, createdAt: newCreatedAt, updatedAt: newUpdatedAt};
+      const userInfo = {userId: id, nickName, introduction, tags, userLikeNum, createdAt: newCreatedAt, updatedAt: newUpdatedAt};
       return userInfo;
     };
 
@@ -67,14 +67,14 @@ const userHandler = {
     let userInfo: {} = {};
     if (userId) {
       userInfo = await userInfoFunc(userId);
-      res.status(200).json({data: userInfo, message: `User ${userId} info`});
+      res.status(200).json({data: {userInfo}, message: `User ${userId} info`});
     } else if (authorization) {
       const accessToken = authorization.split(' ')[1];
       const accTokenSecret = process.env.ACCTOKEN_SECRET || 'acctest';
       jwt.verify(accessToken, accTokenSecret, async (err, decoded: any) => {
         if (err) return res.status(401).json({message: "Invalid token"});
         userInfo = await userInfoFunc(decoded.id);
-        res.status(200).json({data: userInfo, message: 'cur user info'});
+        res.status(200).json({data: {userInfo}, message: 'cur user info'});
       });
     }
   },
@@ -83,7 +83,7 @@ const userHandler = {
     const { authorization } = req.headers;
     const { avatarUrl, nickName, introduction } = req.body;
     if (!authorization) return res.status(401).json({message: 'Unauthoriazed'});
-    if (!avatarUrl || !nickName || !introduction) return res.status(400).json({message: 'Need accurate informations'});
+    if (!avatarUrl || !nickName) return res.status(400).json({message: 'Need accurate informations'});
 
     const accessToken = authorization.split(' ')[1];
     const accTokenSecret = process.env.ACCTOKEN_SECRET || 'acctest';

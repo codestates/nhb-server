@@ -70,6 +70,6 @@ const rank = async (req, res, next) => {
         ;
     }
     ;
-    res.status(200).json({ data: rank, message: 'Rank 1 to 10' });
+    res.status(200).json({ data: { rank }, message: 'Rank 1 to 10' });
 };
 exports.default = rank;

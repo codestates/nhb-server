@@ -96,7 +96,7 @@ const authEmail = async (req, res, next) => {
     //? ejs를 이용한 인증이메일 폼.
     let authEmailForm;
     //? 리다이렉선을 하고싶다면 .env 에서 수정
-    const clientAddr = process.env.CLIENT_ADDR || 'https://localhost:3000/';
+    const clientAddr = process.env.CLIENT_ADDR || 'https://localhost:3000';
     ejs_1.default.renderFile(__dirname + '/authForm/authMail.ejs', { clientAddr, authCode, action, endPoint, display }, (err, data) => {
         if (err)
             console.log(err);

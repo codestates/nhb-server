@@ -11,7 +11,7 @@ const logout = async (req, res, next) => {
     if (!refreshToken)
         return res.status(401).json({ message: 'unauthorized' });
     await blacklist_1.BlackLists.create({ refreshToken }).then(d => {
-        res.status(200).json({ message: 'Logout' });
+        res.clearCookie('refreshToken', { path: '/main' }).status(200).json({ message: 'Logout' });
     });
 };
 exports.default = logout;

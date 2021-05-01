@@ -71,7 +71,7 @@ const rank = async (req: Request, res: Response, next: NextFunction) => {
     };
   };
 
-  res.status(200).json({data: rank, message: 'Rank 1 to 10'});
+  res.status(200).json({data: {rank}, message: 'Rank 1 to 10'});
 };
 
 export default rank;

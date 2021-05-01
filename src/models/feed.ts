@@ -14,6 +14,7 @@ interface FeedsAttributes {
   commentNum?: number,
   topicId: number,
   userId: number
+  createdAt?: Date,
 };
 
 export class Feeds extends Model <FeedsAttributes> {
@@ -21,6 +22,7 @@ export class Feeds extends Model <FeedsAttributes> {
   public content!: string;
   public topicId!: number;
   public userId!: number;
+  public createdAt!: Date;
 
   public static associations: {
     usersFeeds: Association<Users, Feeds>;

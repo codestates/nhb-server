@@ -7,6 +7,7 @@ const user_1 = __importDefault(require("./user"));
 const liveRank_1 = __importDefault(require("./liveRank"));
 const userActivity_1 = __importDefault(require("./userActivity"));
 const tag_1 = __importDefault(require("./tag"));
+const apartment_1 = __importDefault(require("./apartment"));
 module.exports = {
     bring: user_1.default.bring,
     edit: user_1.default.edit,
@@ -15,5 +16,7 @@ module.exports = {
     like: userActivity_1.default.like,
     comment: userActivity_1.default.comment,
     cmtLike: userActivity_1.default.cmtLike,
-    tag: tag_1.default
+    tagBring: tag_1.default.bring,
+    tagEdit: tag_1.default.edit,
+    apt: apartment_1.default
 };
