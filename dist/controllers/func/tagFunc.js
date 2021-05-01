@@ -12,6 +12,7 @@ const hundLike = async (feedId) => {
     if (isExist)
         return;
     const likeNum = await feed_1.Feeds.sum('likeNum', { where: { userId } });
+    console.log(likeNum);
     if (Number(likeNum) < 100)
         return;
     if (userId) {
