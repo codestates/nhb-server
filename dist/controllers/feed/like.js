@@ -7,7 +7,6 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const feed_1 = require("../../models/feed");
 const like_1 = require("../../models/like");
 const user_1 = require("../../models/user");
-const tagFunc_1 = require("../func/tagFunc");
 //? 좋아요와 좋아요 취소 구현
 const likeHandler = (req, res, next) => {
     const { authorization } = req.headers; //? 토큰확인
@@ -40,7 +39,7 @@ const likeHandler = (req, res, next) => {
                 });
                 //? 있으면 좋아요 취소 -> 데이터베이스 삭제
                 let message = '';
-                let popUp = null;
+                let popUp = [];
                 if (isLiked) {
                     await like_1.Likes.destroy({ where: { feedId, userId } }).then(d => {
                         message = 'Dislike';
@@ -54,11 +53,6 @@ const likeHandler = (req, res, next) => {
                 }
                 await like_1.Likes.count({ where: { feedId } }).then(async (d) => {
                     await feed_1.Feeds.update({ likeNum: d }, { where: { id: feedId } }).then(async (d) => {
-                        const isGiven = await tagFunc_1.hundLike(feedId);
-                        if (isGiven) {
-                            popUp = '좋아요 100개를 받아 대박사건 뱃지를 획득 하셨습니다!';
-                        }
-                        ;
                         res.status(200).json({ message, popUp });
                     });
                 });

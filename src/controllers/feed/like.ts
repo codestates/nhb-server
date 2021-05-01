@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 import { Feeds } from '../../models/feed';
 import { Likes } from '../../models/like';
 import { Users } from '../../models/user';
-import { hundLike } from '../func/tagFunc';
 
 //? 좋아요와 좋아요 취소 구현
 const likeHandler = (req: Request, res:Response, next: NextFunction) => {
@@ -33,7 +32,7 @@ const likeHandler = (req: Request, res:Response, next: NextFunction) => {
         });
         //? 있으면 좋아요 취소 -> 데이터베이스 삭제
         let message = '';
-        let popUp: string | null = null;
+        let popUp: [] = []
         if (isLiked) {
           await Likes.destroy({where: {feedId, userId}}).then(d => {
             message = 'Dislike';
@@ -47,10 +46,6 @@ const likeHandler = (req: Request, res:Response, next: NextFunction) => {
 
         await Likes.count({where: {feedId}}).then(async (d) => {
           await Feeds.update({likeNum: d}, {where: {id: feedId}}).then(async (d) => {
-            const isGiven = await hundLike(feedId);
-            if (isGiven) {
-              popUp = '좋아요 100개를 받아 대박사건 뱃지를 획득 하셨습니다!';
-            };
             res.status(200).json({message, popUp});
           });
         })
