@@ -61,7 +61,7 @@
 
 # 🛠️ Architecture
 ### Client Workflow
-![NHB (1)](https://user-images.githubusercontent.com/67426853/113650913-ff426180-96cb-11eb-98a8-6b6ddab9642f.jpg)
+![NHB (1)](https://user-images.githubusercontent.com/66950387/116803408-506e3580-ab52-11eb-89b8-5295dfb5556f.png)
 
 
 ### Server Workflow
