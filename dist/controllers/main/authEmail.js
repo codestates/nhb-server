@@ -3,8 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const nodemailer_1 = __importDefault(require("nodemailer"));
-const ejs_1 = __importDefault(require("ejs"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const user_1 = require("../../models/user");
 dotenv_1.default.config();
@@ -93,37 +91,37 @@ const authEmail = async (req, res, next) => {
             return false;
         }
     });
-    //? ejs를 이용한 인증이메일 폼.
-    let authEmailForm;
-    //? 리다이렉선을 하고싶다면 .env 에서 수정
-    const clientAddr = process.env.CLIENT_ADDR || 'https://localhost:3000';
-    ejs_1.default.renderFile(__dirname + '/authForm/authMail.ejs', { clientAddr, authCode, action, endPoint, display }, (err, data) => {
-        if (err)
-            console.log(err);
-        authEmailForm = data;
-    });
-    //? 메일을 보내는 코드. 각 플렛폼에서 권한 설정부터!
-    const transporter = nodemailer_1.default.createTransport({
-        service: 'gmail',
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        auth: {
-            user: process.env.NODEMAILER_USER,
-            pass: process.env.NODEMAILER_PASSWD,
-        },
-    });
-    await transporter.sendMail({
-        from: `BBBA <tkdfo93@gmail.com>`,
-        to: email,
-        subject: isUser ? 'NHB에 로그인을 완료해주세요!' : 'NHB의 회원이 되어주세요!',
-        html: authEmailForm,
-    }, (error, info) => {
-        if (error) {
-            console.log(error);
-        }
-        res.status(200).json({ "message": action });
-        transporter.close();
-    });
+    // //? ejs를 이용한 인증이메일 폼.
+    // let authEmailForm;
+    // //? 리다이렉선을 하고싶다면 .env 에서 수정
+    // const clientAddr: string = process.env.CLIENT_ADDR || 'https://localhost:3000'
+    // ejs.renderFile(__dirname + '/authForm/authMail.ejs', { clientAddr, authCode, action, endPoint, display }, (err, data) => {
+    //   if (err) console.log(err);
+    //   authEmailForm = data;
+    // })
+    // //? 메일을 보내는 코드. 각 플렛폼에서 권한 설정부터!
+    // const transporter = nodemailer.createTransport({
+    //   service: 'gmail',
+    //   host: 'smtp.gmail.com',
+    //   port: 587,
+    //   secure: false,
+    //   auth: {
+    //       user: process.env.NODEMAILER_USER,
+    //       pass: process.env.NODEMAILER_PASSWD,
+    //   },
+    // });
+    // await transporter.sendMail({
+    //   from: `BBBA <tkdfo93@gmail.com>`,
+    //   to: email,
+    //   subject: isUser ? 'NHB에 로그인을 완료해주세요!' : 'NHB의 회원이 되어주세요!',
+    //   html: authEmailForm,
+    // }, (error, info) => {
+    //   if (error) {
+    //     console.log(error);
+    //   }
+    //   res.status(200).json({"message": action});
+    //   transporter.close();
+    // });
+    res.send(authCode);
 };
 exports.default = authEmail;

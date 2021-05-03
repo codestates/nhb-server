@@ -6,7 +6,7 @@ import { decodeToken } from '../func/decodeToken';
 
 const userActHandler = {
   like: async (req: Request, res: Response, next: NextFunction) => {
-    const { userId, message } = await decodeToken(req, res);
+    const { userId, message } = await decodeToken(req);
     if (!userId) return res.status(401).json({message});
 
     await Likes.findAll({where: {userId}, attributes: ['feedId'], order: [['id', 'DESC']]}).then(d => {
@@ -16,7 +16,7 @@ const userActHandler = {
   },
 
   comment: async (req: Request, res: Response, next: NextFunction) => {
-    const { userId, message } = await decodeToken(req, res);
+    const { userId, message } = await decodeToken(req);
     if (!userId) return res.status(401).json({message});
   
     await Comments.findAll({where: {userId}, attributes: ['feedId'], order: [['id', 'DESC']]}).then(d => {
@@ -26,7 +26,7 @@ const userActHandler = {
   },
 
   cmtLike: async (req: Request, res: Response, next: NextFunction) => {
-    const { userId, message } = await decodeToken(req, res);
+    const { userId, message } = await decodeToken(req);
     if (!userId) return res.status(401).json({message});
 
     await Comments_likes.findAll({where: {userId}, attributes: ['commentId'], order: [['id', 'DESC']]}).then(d => {
