@@ -10,7 +10,7 @@ const tagHandler = {
   },
 
   edit: async (req: Request, res: Response, next: NextFunction) => {
-    const { userId, message } = await decodeToken(req, res);
+    const { userId, message } = await decodeToken(req);
     const { tagId } = req.body;
     if (!userId) return res.status(401).json({message});
     if (!tagId) return res.status(400).json({message: 'Need accurate informations'});

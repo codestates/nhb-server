@@ -6,7 +6,7 @@ const like_1 = require("../../models/like");
 const decodeToken_1 = require("../func/decodeToken");
 const userActHandler = {
     like: async (req, res, next) => {
-        const { userId, message } = await decodeToken_1.decodeToken(req, res);
+        const { userId, message } = await decodeToken_1.decodeToken(req);
         if (!userId)
             return res.status(401).json({ message });
         await like_1.Likes.findAll({ where: { userId }, attributes: ['feedId'], order: [['id', 'DESC']] }).then(d => {
@@ -15,7 +15,7 @@ const userActHandler = {
         });
     },
     comment: async (req, res, next) => {
-        const { userId, message } = await decodeToken_1.decodeToken(req, res);
+        const { userId, message } = await decodeToken_1.decodeToken(req);
         if (!userId)
             return res.status(401).json({ message });
         await comment_1.Comments.findAll({ where: { userId }, attributes: ['feedId'], order: [['id', 'DESC']] }).then(d => {
@@ -24,7 +24,7 @@ const userActHandler = {
         });
     },
     cmtLike: async (req, res, next) => {
-        const { userId, message } = await decodeToken_1.decodeToken(req, res);
+        const { userId, message } = await decodeToken_1.decodeToken(req);
         if (!userId)
             return res.status(401).json({ message });
         await comments_like_1.Comments_likes.findAll({ where: { userId }, attributes: ['commentId'], order: [['id', 'DESC']] }).then(d => {
