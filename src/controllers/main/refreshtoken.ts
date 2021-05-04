@@ -19,8 +19,8 @@ const refreshToken = async (req: Request, res: Response, next: NextFunction) => 
 
     if (isBlocked) return res.status(401).json({message: 'Blocked reftoken'});
     
-    const refTokenSecret = process.env.REFTOKEN_SECRET || 'reftest';
-    await jwt.verify(refreshToken, refTokenSecret, async (err: any, decoded: any) => {
+    const accTokenSecret = process.env.ACCTOKEN_SECRET || 'acctest';
+    await jwt.verify(refreshToken, accTokenSecret, async (err: any, decoded: any) => {
       //? 토큰이 만료 되었을 때
       if (err) {
         res.status(401).json({messsage: "Invalid token"});
@@ -30,7 +30,7 @@ const refreshToken = async (req: Request, res: Response, next: NextFunction) => 
         if (!userInfo) {
           res.status(404).json({message: "User is not found"});
         } else {
-          const accessToken = await jwt.sign({id: userInfo.id}, refTokenSecret, { expiresIn: '5h'});
+          const accessToken = await jwt.sign({id: userInfo.id}, accTokenSecret, { expiresIn: '5h'});
           res.status(200).json({"data": {"accessToken": accessToken}, "message": "New accesstoken is issued"});
         }
       }
