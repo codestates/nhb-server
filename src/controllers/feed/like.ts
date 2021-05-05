@@ -12,13 +12,14 @@ const likeHandler = (req: Request, res:Response, next: NextFunction) => {
   } else {
     const accessToken = authorization.split(' ')[1];
     const accTokenSecret = process.env.ACCTOKEN_SECRET || 'acctest'
+
     jwt.verify(accessToken, accTokenSecret, async (err: any, decoded: any ) => {
       if (err) {
         res.status(401).json({message: 'Invalid token'}); //? 토큰 만료
       } else {
-        const { feedId } = req.body;
+        const feedId: number | null = Number(req.body.feedId) || null;
         if (!feedId) return res.status(400).json({message: 'Need accurate informaions'});
-        const userId = decoded.id;
+        const userId: number = Number(decoded.id);
         const status: number = await Users.findOne({where:{id: userId}, attributes: ['status']}).then(d => {
           return Number(d?.getDataValue('status'));
         });
@@ -31,20 +32,21 @@ const likeHandler = (req: Request, res:Response, next: NextFunction) => {
         });
         //? 있으면 좋아요 취소 -> 데이터베이스 삭제
         let message = '';
+        let popUp: [] = []
         if (isLiked) {
           await Likes.destroy({where: {feedId, userId}}).then(d => {
-            message = 'Dislike'
+            message = 'Dislike';
           })
         //? 없다면 데이터 베이스 생성
         } else {
-          await Likes.create({feedId, userId}).then(d => {
-            message = 'Like'
+          await Likes.create({feedId, userId}).then(async (d) => {
+            message = 'Like';
           })
         }
 
-        await Likes.count({where: {feedId}}).then( async (d) => {
-          await Feeds.update({likeNum: d}, {where: {id: feedId}}).then(d => {
-            res.status(200).json({message});
+        await Likes.count({where: {feedId}}).then(async (d) => {
+          await Feeds.update({likeNum: d}, {where: {id: feedId}}).then(async (d) => {
+            res.status(200).json({message, popUp});
           });
         })
       }

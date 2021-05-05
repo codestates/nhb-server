@@ -6,6 +6,7 @@ import { Users_tags } from '../../models/users_tag';
 import { Tags } from '../../models/tag';
 import { Likes } from '../../models/like';
 import { Feeds } from '../../models/feed';
+import { hundLike } from '../func/tagFunc';
 dotenv.config();
 
 const userHandler = {
@@ -65,6 +66,7 @@ const userHandler = {
 
     if (!authorization && !userId) return res.status(401).json({message: 'Unauthorized'});
     let userInfo: {} = {};
+    let popUp: string[] = [];
     if (userId) {
       userInfo = await userInfoFunc(userId);
       res.status(200).json({data: {userInfo}, message: `User ${userId} info`});
@@ -74,7 +76,11 @@ const userHandler = {
       jwt.verify(accessToken, accTokenSecret, async (err, decoded: any) => {
         if (err) return res.status(401).json({message: "Invalid token"});
         userInfo = await userInfoFunc(decoded.id);
-        res.status(200).json({data: {userInfo}, message: 'cur user info'});
+        const isHundLikeGiven = await hundLike(decoded.id);
+        if (isHundLikeGiven) {
+          popUp.push('좋아요 100개를 받아 대박사건 뱃지를 획득했습니다!');
+        }
+        res.status(200).json({data: {userInfo}, message: 'cur user info', popUp});
       });
     }
   },

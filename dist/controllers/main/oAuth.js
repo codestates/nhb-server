@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const crypto_1 = __importDefault(require("crypto"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const util_1 = __importDefault(require("util"));
@@ -12,6 +11,7 @@ dotenv_1.default.config();
 const oauth_1 = require("../../models/oauth");
 const user_1 = require("../../models/user");
 const users_tag_1 = require("../../models/users_tag");
+const issueToken_1 = require("../func/issueToken");
 const oAuthHandler = async (req, res, next) => {
     const accessToken = req.headers.authorization;
     const randByte = util_1.default.promisify(crypto_1.default.randomBytes);
@@ -39,14 +39,6 @@ const oAuthHandler = async (req, res, next) => {
         status = Number(userInfo.status);
         oAuthInfo = await oauth_1.OAuths.findOne({ where: { userId: userInfo.id }, raw: true });
     }
-    const issueToken = (secret, expiresIn, id, status) => {
-        if (status === 9)
-            return jsonwebtoken_1.default.sign({ id: id, status }, secret, { expiresIn: '3h' });
-        else
-            return jsonwebtoken_1.default.sign({ id: id }, secret, { expiresIn });
-    };
-    const accTokenSecret = process.env.ACCTOKEN_SECRET || 'acctest';
-    const refTokenSecret = process.env.REFTOKEN_SECRET || 'reftest';
     const domain = process.env.COOKIE_DOMAIN || 'localhost';
     let issuedAccessToken, refreshToken, message = '';
     //? oauth id와 email로 된 user가 존재하지 않을 경우 회원가입
@@ -55,8 +47,8 @@ const oAuthHandler = async (req, res, next) => {
         await user_1.Users.create({ email, nickName, introduction: null, avatarUrl: null, authCode: null, status: 1 }).then(async (d) => {
             await oauth_1.OAuths.create({ userId: d.id, oAuthId: hashedId, platform: 'google', salt });
             await users_tag_1.Users_tags.create({ tagId: 1, userId: d.id, isUsed: 0 });
-            issuedAccessToken = await issueToken(accTokenSecret, '5h', d.id);
-            refreshToken = await issueToken(refTokenSecret, '14d', d.id);
+            issuedAccessToken = await issueToken_1.issueToken(true, '5h', d.id);
+            refreshToken = await issueToken_1.issueToken(false, '14d', d.id);
             message = 'Sign up';
         });
     }
@@ -64,8 +56,8 @@ const oAuthHandler = async (req, res, next) => {
     //? email의 회원 정보만 존재할 경우 oauth랑 연동
     if (userInfo && !oAuthInfo && hashedId) {
         await oauth_1.OAuths.create({ userId: userInfo.id, oAuthId: hashedId, platform: 'google', salt });
-        issuedAccessToken = await issueToken(accTokenSecret, '5h', userInfo.id, status);
-        refreshToken = await issueToken(refTokenSecret, '14d', userInfo.id, status);
+        issuedAccessToken = await issueToken_1.issueToken(true, '5h', userInfo.id, status);
+        refreshToken = await issueToken_1.issueToken(false, '14d', userInfo.id, status);
         message = 'Login';
     }
     //? 둘 다 존재할 경우 로그인
@@ -77,8 +69,8 @@ const oAuthHandler = async (req, res, next) => {
         const decodedId = await pbkdf2(id, savedSalt, 100000, 64, 'sha512').then(d => d.toString('base64')).catch(e => { console.log('hashingerror'); });
         if (decodedId !== oAuthId)
             return res.status(401).json({ message: 'unauthorized' });
-        issuedAccessToken = await issueToken(accTokenSecret, '5h', userId, status);
-        refreshToken = await issueToken(refTokenSecret, '14d', userId, status);
+        issuedAccessToken = await issueToken_1.issueToken(true, '5h', userId, status);
+        refreshToken = await issueToken_1.issueToken(false, '14d', userId, status);
         message = 'Login';
     }
     ;
@@ -89,6 +81,7 @@ const oAuthHandler = async (req, res, next) => {
     if (Number(status) === 9) {
         resMessage = { data: { accessToken: issuedAccessToken, isAdmin: true }, message: "Admin accessed" };
     }
+    ;
     res.status(200)
         .cookie('refreshToken', refreshToken, {
         domain,

@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const sequelize_1 = __importDefault(require("sequelize"));
 dotenv_1.default.config();
@@ -12,44 +11,28 @@ const feed_1 = require("../../models/feed");
 const user_1 = require("../../models/user");
 const users_tag_1 = require("../../models/users_tag");
 const tag_1 = require("../../models/tag");
+const decodeToken_1 = require("../func/decodeToken");
 const feedHandler = {
     //? 피드 업로드 핸들러
-    upload: (req, res, next) => {
-        const { authorization } = req.headers; //? 토큰 확인
-        if (!authorization) {
-            res.status(401).json({ message: 'Unauthorized' }); //? 없다면 에러
+    upload: async (req, res, next) => {
+        const { userId, message } = await decodeToken_1.decodeToken(req);
+        if (!userId)
+            return res.status(401).json({ message });
+        //? 바디에 담긴 콘텐트를 갖고와서 데이터베이스에 삽입
+        const { word, content } = req.body;
+        if (!word || content instanceof Array === false) {
+            return res.status(400).json({ message: 'Need accurate informaions' });
+        }
+        ;
+        const strContent = JSON.stringify(content);
+        const topic = await topic_1.Topics.findOne({ where: { word } });
+        if (!topic) {
+            res.status(404).json({ message: 'The topic is not fonud' });
         }
         else {
-            const accessToken = authorization.split(' ')[1];
-            const accTokenSecret = process.env.ACCTOKEN_SECRET || 'acctest';
-            jsonwebtoken_1.default.verify(accessToken, accTokenSecret, async (err, decoded) => {
-                if (err) {
-                    res.status(401).json({ message: 'Invalid token' }); //? 토큰 만료
-                }
-                else {
-                    //? 있다면 유저아이디를 이용, 바디에 담긴 콘텐트를 갖고와서 데이터베이스에 삽입
-                    const { word, content } = req.body;
-                    if (!word || content instanceof Array === false) {
-                        return res.status(400).json({ message: 'Need accurate informaions' });
-                    }
-                    const strContent = JSON.stringify(content);
-                    const userId = decoded.id;
-                    const status = await user_1.Users.findOne({ where: { id: userId }, attributes: ['status'] }).then(d => {
-                        return Number(d?.getDataValue('status'));
-                    });
-                    if (status === 3)
-                        return res.status(400).json({ message: "Banned user" });
-                    const topic = await topic_1.Topics.findOne({ where: { word } });
-                    if (!topic) {
-                        res.status(404).json({ message: 'The topic is not fonud' });
-                    }
-                    else {
-                        const topicId = topic.getDataValue('id');
-                        await feed_1.Feeds.create({ content: strContent, topicId, userId }).then(d => {
-                            res.status(201).json({ message: 'The feed is uploaded' });
-                        });
-                    }
-                }
+            const topicId = topic.getDataValue('id');
+            await feed_1.Feeds.create({ content: strContent, topicId, userId }).then(d => {
+                res.status(201).json({ message: 'The feed is uploaded' });
             });
         }
     },
@@ -134,84 +117,52 @@ const feedHandler = {
     },
     //? 피드 삭제 핸들러
     remove: async (req, res, next) => {
-        const { authorization } = req.headers;
+        let { userId, message, isAdmin } = await decodeToken_1.decodeToken(req);
+        if (!userId)
+            return res.status(401).json({ message });
         const { feedId } = req.body;
-        if (!authorization) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
-        ;
-        if (!feedId) {
+        if (!feedId)
             return res.status(400).json({ message: 'Need accurate informaions' });
+        //? admin 처리
+        let where = { id: feedId, userId };
+        message = `The feed ${feedId} is removed`;
+        if (isAdmin) {
+            where = { id: feedId };
+            message = 'admin: ' + message;
         }
         ;
-        const accessToken = authorization.split(' ')[1];
-        const accTokenSecret = process.env.ACCTOKEN_SECRET || 'acctest';
-        jsonwebtoken_1.default.verify(accessToken, accTokenSecret, async (err, decoded) => {
-            if (err) {
-                return res.status(401).json({ message: 'Invalid token' });
-            }
-            ;
-            const userId = decoded.id;
-            const status = await user_1.Users.findOne({ where: { id: userId }, attributes: ['status'] }).then(d => {
-                return Number(d?.getDataValue('status'));
-            });
-            if (status === 3)
-                return res.status(400).json({ message: "Banned user" });
-            //? admin 처리
-            let where = { id: feedId, userId };
-            let message = `The feed ${feedId} is removed`;
-            if (status === 9) {
-                where = { id: feedId };
-                message = 'admin: ' + message;
-            }
-            //? 모든 유효성 검사를 통과 후 삭제
-            await feed_1.Feeds.destroy({ where }).then(d => {
-                if (d === 0)
-                    return res.status(404).json({ message: 'The feedId does not match with userId' });
-                res.status(200).json({ message });
-            })
-                .catch(e => {
-                console.log('delete feed error');
-            });
+        //? 모든 유효성 검사를 통과 후 삭제
+        await feed_1.Feeds.destroy({ where }).then(d => {
+            if (d === 0)
+                return res.status(404).json({ message: 'The feedId does not match with userId' });
+            res.status(200).json({ message });
+        })
+            .catch(e => {
+            console.log('delete feed error');
         });
     },
     //? 피드 에디트
     edit: async (req, res, next) => {
-        const { authorization } = req.headers;
+        let { userId, message, isAdmin } = await decodeToken_1.decodeToken(req);
+        if (!userId)
+            return res.status(401).json({ message });
         const { content, feedId } = req.body;
-        if (!authorization) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
-        ;
-        if (!content || !feedId || content instanceof Array === false) {
+        if (!content || !feedId || content instanceof Array === false)
             return res.status(400).json({ message: 'Need accurate informaion' });
+        //? 모든 유효성 검사 후 수정.
+        let where = { id: feedId, userId };
+        message = `The feed ${feedId} is edited`;
+        if (isAdmin) {
+            where = { id: feedId };
+            message = 'admin: ' + message;
         }
         ;
-        const accessToken = authorization.split(' ')[1];
-        const accTokenSecret = process.env.ACCTOKEN_SECRET || 'acctest';
-        jsonwebtoken_1.default.verify(accessToken, accTokenSecret, async (err, decoded) => {
-            if (err)
-                return res.status(401).json({ message: 'Invalid token' });
-            const userId = decoded.id;
-            //? 모든 유효성 검사 후 수정.
-            const status = await user_1.Users.findOne({ where: { id: userId }, attributes: ['status'] }).then(d => {
-                return Number(d?.getDataValue('status'));
-            });
-            if (status === 3)
-                return res.status(400).json({ message: "Banned user" });
-            let where = { id: feedId, userId };
-            let message = `The feed ${feedId} is edited`;
-            if (status === 9) {
-                where = { id: feedId };
-                message = 'admin: ' + message;
-            }
-            await feed_1.Feeds.update({ content: JSON.stringify(content) }, { where }).then(d => {
-                if (d[0] === 0)
-                    return res.status(404).json({ message: 'The feedId does not match with userId' });
-                res.status(200).json({ message });
-            }).catch(e => {
-                console.log('edit feed error');
-            });
+        await feed_1.Feeds.update({ content: JSON.stringify(content) }, { where }).then(d => {
+            if (d[0] === 0)
+                return res.status(404).json({ message: 'The feedId does not match with userId' });
+            res.status(200).json({ message });
+        }).catch(e => {
+            console.log('edit feed error');
         });
     }
 };

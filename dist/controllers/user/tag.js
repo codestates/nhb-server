@@ -9,7 +9,7 @@ const tagHandler = {
         res.status(200).json({ data: { tags }, message: 'All tags info' });
     },
     edit: async (req, res, next) => {
-        const { userId, message } = await decodeToken_1.decodeToken(req, res);
+        const { userId, message } = await decodeToken_1.decodeToken(req);
         const { tagId } = req.body;
         if (!userId)
             return res.status(401).json({ message });

@@ -10,6 +10,7 @@ const users_tag_1 = require("../../models/users_tag");
 const tag_1 = require("../../models/tag");
 const like_1 = require("../../models/like");
 const feed_1 = require("../../models/feed");
+const tagFunc_1 = require("../func/tagFunc");
 dotenv_1.default.config();
 const userHandler = {
     bring: async (req, res, next) => {
@@ -67,6 +68,7 @@ const userHandler = {
         if (!authorization && !userId)
             return res.status(401).json({ message: 'Unauthorized' });
         let userInfo = {};
+        let popUp = [];
         if (userId) {
             userInfo = await userInfoFunc(userId);
             res.status(200).json({ data: { userInfo }, message: `User ${userId} info` });
@@ -78,7 +80,11 @@ const userHandler = {
                 if (err)
                     return res.status(401).json({ message: "Invalid token" });
                 userInfo = await userInfoFunc(decoded.id);
-                res.status(200).json({ data: { userInfo }, message: 'cur user info' });
+                const isHundLikeGiven = await tagFunc_1.hundLike(decoded.id);
+                if (isHundLikeGiven) {
+                    popUp.push('좋아요 100개를 받아 대박사건 뱃지를 획득했습니다!');
+                }
+                res.status(200).json({ data: { userInfo }, message: 'cur user info', popUp });
             });
         }
     },
